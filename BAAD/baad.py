@@ -40,7 +40,7 @@ def calculate_co_attack_group(co_attack_data, terrorist):
 # In[8]:
 
 
-terrorists, terrorists_dict, co_attack_data = prepare_graph('BAAD_1M.csv')
+terrorists, terrorists_dict, co_attack_data = prepare_graph('data/BAAD_1M.csv')
 
 
 # In[43]:

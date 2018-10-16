@@ -6,8 +6,8 @@
 
 import pandas as pd
 
-nodes = pd.read_csv('Madrid/Madrid_Nodes_Public_Version2.csv')
-relations = pd.read_csv('Madrid/Madrid_Relations_Public_Version2.csv')
+nodes = pd.read_csv('data/Madrid/Madrid_Nodes_Public_Version2.csv')
+relations = pd.read_csv('data/Madrid/Madrid_Relations_Public_Version2.csv')
 
 
 # In[6]:
