@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import pandas as pd
+import matplotlib.pyplot as plt
 
 nodes = pd.read_csv('data/Madrid/Madrid_Nodes_Public_Version2.csv')
 relations = pd.read_csv('data/Madrid/Madrid_Relations_Public_Version2.csv')
@@ -11,10 +12,7 @@ relations = pd.read_csv('data/Madrid/Madrid_Relations_Public_Version2.csv')
 graph = relations.groupby('ID')['Tie_ID'].apply(list).to_dict()
 freqs = [len(graph[node]) for node in graph]
 
-import matplotlib.pyplot as plt
-
 histogram = plt.hist(freqs, bins=max(freqs))
-
 
 # Build a dynamic graph from Madrid data. Examine how did they change across time?
 dynamic_graph = []
