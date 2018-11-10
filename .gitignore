@@ -1,4 +1,4 @@
 # Created by .ignore support plugin (hsz.mobi)
 .idea/
-.*iml
-dynamic-graphs.iml
+*iml
+.ipynb_checkpoints
