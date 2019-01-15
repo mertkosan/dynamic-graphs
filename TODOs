@@ -1,4 +1,1 @@
-# Build a dynamic graph from Madrid data. Find a k-core for each graph (timestamp) and compare the k-cores, how did they change?
 
-# Also use build a dynamic graph, calculate (k,r) core for each graph (timestamp) and compare the (k,r) cores, how did they change?
-# You need to create a similarity metric between the nodes.
