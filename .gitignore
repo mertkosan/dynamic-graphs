@@ -2,3 +2,5 @@
 .idea/
 *iml
 .ipynb_checkpoints
+data/ICEWS/data
+__pycache__/
