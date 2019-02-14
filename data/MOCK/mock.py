@@ -1,6 +1,11 @@
 import numpy as np
 import networkx as nx
-
+import os
+import csv
+from time import asctime
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+from processing.features import features as feature_functions
 
 class Mock:
     def __init__(self):
@@ -113,4 +118,93 @@ class DynamicRandomGraph2:
         return nx.density(graph) >= self._event_trigger
 
 
-drg = DynamicRandomGraph2(100)
+class ClusteredDynamicRandomGraph:
+    def __init__(self, graph_count, n=100, p=0.1, threshold=0.2, seed=None, is_chain=False):
+        self._graphs = []  # graphs
+        self._labels = []  # labels (event or not)
+        self._features = []  # feature vectors for each graph
+        self._clusters = None  # cluster object after training
+
+        self._n = n  # number of nodes
+        self._p = p  # edge probability
+        self._threshold = threshold  # threshold value that p will be stable
+        self._is_chain = is_chain  # is the dynamic graph chain?
+
+        self._seed = seed
+
+        self._construct_graphs(graph_count)
+        self._generate_features()
+        # self._normalize_features()
+        self._cluster_features()
+        # self._write_data()
+
+    def get_graphs(self):
+        return self._graphs
+
+    def _next_parameters(self):
+        if not self._is_chain:
+            self._n += int(np.round(np.random.exponential(1)))
+            if self._p > self._threshold:
+                self._p += np.random.normal(0, 0.01)
+            else:
+                self._p += np.random.normal(0.01, 0.01)
+        # TODO : elif self.chain...
+
+    def _construct_graphs(self, graph_count):
+        for i in range(graph_count):
+            gi = nx.erdos_renyi_graph(n=self._n, p=self._p, seed=self._seed)
+            self._graphs.append(gi)
+            self._next_parameters()
+            print(self._n, self._p)
+
+    def _generate_features(self):
+        for subgraph in self._graphs:
+            graph_features = []
+            for func in feature_functions:
+                graph_features.append(func(subgraph))
+            self._features.append(graph_features)
+
+    def _cluster_features(self):
+        x = np.array(self._features)
+        good_k = 0
+        max_score = -1
+        for k in range(3, 11):
+            kmeans = KMeans(n_clusters=k, random_state=0).fit(x)
+            score = silhouette_score(x, kmeans.labels_)
+            if score > max_score:
+                max_score = score
+                good_k = k
+        print(max_score)
+        self._clusters = KMeans(n_clusters=good_k, random_state=0).fit(x)
+
+    def _determine_labels(self):
+        # TODO: choose random cluster as an event
+        self._labels = list(self._clusters.labels_)
+
+    def _write_data(self):
+        if len(self._graphs) != len(self._labels):
+            raise Exception("The number of graphs should be equal to the number of labels!")
+
+        if len(self._graphs) <= 0 or len(self._labels) <= 0:
+            raise Exception("The size of the graph/labels should be bigger than 0!")
+
+        _dump_time = asctime()
+        with open("data/%s_edges.csv" % str(_dump_time), "w") as _csv_file:
+            _field_names = ['timestamp', 'source', 'target']
+            _writer = csv.DictWriter(_csv_file, fieldnames=_field_names)
+            _writer.writeheader()
+
+            for timestamp, graph in enumerate(self._graphs):
+                for edges in graph.edges:
+                    _writer.writerow({'timestamp': timestamp, 'source': edges[0], 'target': edges[1]})
+
+        with open("data/%s_labels.csv" % str(_dump_time), "w") as _csv_file:
+            _field_names = ['timestamp', 'is_event']
+            _writer = csv.DictWriter(_csv_file, fieldnames=_field_names)
+            _writer.writeheader()
+
+            for timestamp, label in enumerate(self._labels):
+                _writer.writerow({'timestamp': timestamp, 'is_event': label})
+
+
+cdrg = ClusteredDynamicRandomGraph(100)
