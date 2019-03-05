@@ -1,11 +1,11 @@
 import numpy as np
 import networkx as nx
-import os
 import csv
 from time import asctime
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
-from processing.features import features as feature_functions
+from processing.features import feature_functions_artificial_data as feature_functions
+
 
 class Mock:
     def __init__(self):
@@ -123,20 +123,28 @@ class ClusteredDynamicRandomGraph:
         self._graphs = []  # graphs
         self._labels = []  # labels (event or not)
         self._features = []  # feature vectors for each graph
+        self._features_diff = [] # feature difference between two consecutive graphs
         self._clusters = None  # cluster object after training
 
         self._n = n  # number of nodes
         self._p = p  # edge probability
         self._threshold = threshold  # threshold value that p will be stable
         self._is_chain = is_chain  # is the dynamic graph chain?
+        self._time_difference = True  # will it be looked difference of features
 
         self._seed = seed
 
         self._construct_graphs(graph_count)
         self._generate_features()
         # self._normalize_features()
-        self._cluster_features()
-        # self._write_data()
+        if self._time_difference:
+            self._calculate_feature_difference()
+            self._cluster_features(self._features_diff)
+            self._labels.append(0)
+        else:
+            self._cluster_features(self._features)
+        self._determine_labels()
+        self._write_data()
 
     def get_graphs(self):
         return self._graphs
@@ -164,8 +172,14 @@ class ClusteredDynamicRandomGraph:
                 graph_features.append(func(subgraph))
             self._features.append(graph_features)
 
-    def _cluster_features(self):
-        x = np.array(self._features)
+    def _calculate_feature_difference(self):
+        self._features_diff = []
+        for i in range(len(self._features)-1):
+            diff = np.subtract(self._features[i+1], self._features[i])
+            self._features_diff.append(diff)
+
+    def _cluster_features(self, features):
+        x = np.array(features)
         good_k = 0
         max_score = -1
         for k in range(3, 11):
@@ -178,8 +192,12 @@ class ClusteredDynamicRandomGraph:
         self._clusters = KMeans(n_clusters=good_k, random_state=0).fit(x)
 
     def _determine_labels(self):
-        # TODO: choose random cluster as an event
-        self._labels = list(self._clusters.labels_)
+        event_cluster = np.random.randint(0, self._clusters.n_clusters)
+        for label in self._clusters.labels_:
+            if event_cluster == label:
+                self._labels.append(1)
+            else:
+                self._labels.append(0)
 
     def _write_data(self):
         if len(self._graphs) != len(self._labels):
